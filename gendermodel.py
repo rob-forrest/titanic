@@ -8,6 +8,10 @@ Revised: 28 March 2014
 
 import csv as csv
 import numpy as np
+<<<<<<< HEAD
+=======
+import pdb
+>>>>>>> origin/master
 
 csv_file_object = csv.reader(open('train.csv', 'rb')) 	# Load in the csv file
 header = csv_file_object.next() 						# Skip the fist line as it is a header
@@ -65,9 +69,13 @@ header = test_file_object.next()
 predictions_file = open("gendermodel.csv", "wb")
 predictions_file_object = csv.writer(predictions_file)
 predictions_file_object.writerow(["PassengerId", "Survived"])	# write the column headers
-for row in test_file_object:									# For each row in test file,
-    if row[3] == 'female':										# is it a female, if yes then
-        predictions_file_object.writerow([row[0], "1"])			# write the PassengerId, and predict 1
+for row in test_file_object:
+    try:
+        age = float(row[4])
+    except:
+        age = 10000							# For each row in test file,
+    if (row[3] == 'female') or age < 18: #
+        predictions_file_object.writerow([row[0], "1"])
     else:														# or else if male,
         predictions_file_object.writerow([row[0], "0"])			# write the PassengerId, and predict 0.
 test_file.close()												# Close out the files.
