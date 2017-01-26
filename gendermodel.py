@@ -70,8 +70,12 @@ header = test_file_object.next()
 predictions_file = open("gendermodel.csv", "wb")
 predictions_file_object = csv.writer(predictions_file)
 predictions_file_object.writerow(["PassengerId", "Survived"])	# write the column headers
-for row in test_file_object:							# For each row in test file,
-    if (row[3] == 'female'):
+for row in test_file_object:	
+    try:
+        age = float(row[4])
+    except:
+        age = 10000							# For each row in test file,
+    if (row[3] == 'female') or age < 18: #
         predictions_file_object.writerow([row[0], "1"])
     else:														# or else if male,
         predictions_file_object.writerow([row[0], "0"])			# write the PassengerId, and predict 0.
