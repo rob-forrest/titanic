@@ -9,6 +9,8 @@ import pandas as pd
 import numpy as np
 import csv as csv
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
 
 # Data cleanup
 # TRAIN DATA
@@ -51,13 +53,13 @@ test_df['Gender'] = test_df['Sex'].map( {'female': 0, 'male': 1} ).astype(int)
 # Embarked from 'C', 'Q', 'S'
 # All missing Embarked -> just make them embark from most common place
 if len(test_df.Embarked[ test_df.Embarked.isnull() ]) > 0:
-    test_df.Embarked[ test_df.Embarked.isnull() ] = test_df.Embarked.dropna().mode().values
+    test_df.Embarked[ test_df.Embarked.isnull() ] = test_df.Embarked.dropna().mode().values # try changing to train_df
 # Again convert all Embarked strings to int
 test_df.Embarked = test_df.Embarked.map( lambda x: Ports_dict[x]).astype(int)
 
 
 # All the ages with no data -> make the median of all Ages
-median_age = test_df['Age'].dropna().median()
+median_age = test_df['Age'].dropna().median() # try with train_df
 if len(test_df.Age[ test_df.Age.isnull() ]) > 0:
     test_df.loc[ (test_df.Age.isnull()), 'Age'] = median_age
 
@@ -80,18 +82,28 @@ test_df = test_df.drop(['Name', 'Sex', 'Ticket', 'Cabin', 'PassengerId'], axis=1
 train_data = train_df.values
 test_data = test_df.values
 
+param_grid = [
+  {'n_estimators': [5, 10, 100, 1000], 'criterion': ['gini', 'entropy'], 'max_features': ['auto', 'sqrt', 'log2', None]}
+ ]
 
-print 'Training...'
-forest = RandomForestClassifier(n_estimators=100)
-forest = forest.fit( train_data[0::,1::], train_data[0::,0] )
+X_train = train_data[0::,1::] 
+y_train = train_data[0::,0]
+clf = GridSearchCV(RandomForestClassifier, param_grid, cv=5, scoring='%s_macro' % score)
+clf.fit(X_train, y_train)
+print clf.best_params_
 
-print 'Predicting...'
-output = forest.predict(test_data).astype(int)
+
+# print 'Training...'
+# forest = RandomForestClassifier(n_estimators=100)
+# forest = forest.fit( train_data[0::,1::], train_data[0::,0] )
+
+# print 'Predicting...'
+# output = forest.predict(test_data).astype(int)
 
 
-predictions_file = open("myfirstforest.csv", "wb")
-open_file_object = csv.writer(predictions_file)
-open_file_object.writerow(["PassengerId","Survived"])
-open_file_object.writerows(zip(ids, output))
-predictions_file.close()
-print 'Done.'
+# predictions_file = open("myfirstforest.csv", "wb")
+# open_file_object = csv.writer(predictions_file)
+# open_file_object.writerow(["PassengerId","Survived"])
+# open_file_object.writerows(zip(ids, output))
+# predictions_file.close()
+# print 'Done.'
