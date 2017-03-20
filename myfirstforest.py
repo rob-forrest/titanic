@@ -83,14 +83,25 @@ train_data = train_df.values
 test_data = test_df.values
 
 param_grid = [
-  {'n_estimators': [5, 10, 100, 1000], 'criterion': ['gini', 'entropy'], 'max_features': ['auto', 'sqrt', 'log2', None]}
+  {'n_estimators': [10, 50, 100, 1000, 10000], 'criterion': ['gini', 'entropy'], 'max_features': ['auto', 'sqrt', 'log2', None]}
  ]
+# param_grid = [
+#   {'n_estimators': [5, 10, 100, 1000]}
+#  ]
 
 X_train = train_data[0::,1::] 
 y_train = train_data[0::,0]
-clf = GridSearchCV(RandomForestClassifier, param_grid, cv=5, scoring='%s_macro' % score)
+# clf = GridSearchCV(RandomForestClassifier(), param_grid) #, cv=5, scoring='precision_macro')
+# clf.fit(X_train, y_train)
+# print clf.best_params_
+# print clf.cv_results_['mean_test_score']
+# print clf.cv_results_['params']
+
+
+clf = RandomForestClassifier(n_estimators=1000, max_features=None, criterion='entropy')
 clf.fit(X_train, y_train)
-print clf.best_params_
+print list(train_df.columns.values)
+print clf.feature_importances_
 
 
 # print 'Training...'
@@ -99,6 +110,8 @@ print clf.best_params_
 
 # print 'Predicting...'
 # output = forest.predict(test_data).astype(int)
+
+# NEXT STEPS (3/20/17): build a predictive model for age and fare to impute missing data
 
 
 # predictions_file = open("myfirstforest.csv", "wb")
