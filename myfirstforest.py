@@ -11,6 +11,21 @@ import csv as csv
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeRegressor
+
+
+
+
+def extract_title(name):
+    title_dict = {'Mr': 6, 'Mrs': 1, 'Miss': 2, 'Master': 3, 'Dr': 4, 'Rev': 5}
+    for title in title_dict:
+        if title in name:
+            return title_dict[title]
+
+    return 0
+
+
+
 
 # Data cleanup
 # TRAIN DATA
@@ -33,13 +48,43 @@ Ports = list(enumerate(np.unique(train_df['Embarked'])))    # determine all valu
 Ports_dict = { name : i for i, name in Ports }              # set up a dictionary in the form  Ports : index
 train_df.Embarked = train_df.Embarked.map( lambda x: Ports_dict[x]).astype(int)     # Convert all Embark strings to int
 
-# All the ages with no data -> make the median of all Ages
-median_age = train_df['Age'].dropna().median()
-if len(train_df.Age[ train_df.Age.isnull() ]) > 0:
-    train_df.loc[ (train_df.Age.isnull()), 'Age'] = median_age
+
+#-----------------------------------------------------------------
+# # All the ages with no data -> make the median of all Ages
+# median_age = train_df['Age'].dropna().median()
+# if len(train_df.Age[ train_df.Age.isnull() ]) > 0:
+#     train_df.loc[ (train_df.Age.isnull()), 'Age'] = median_age
+
+# Train a regression decision tree to predict age
+# 1. prepare the features
+train_df['Title'] = train_df['Name'].map(extract_title) # create new feature for passenger title
+
+
+
+# 2. train the tree
 
 # Remove the Name column, Cabin, Ticket, and Sex (since I copied and filled it to Gender)
-train_df = train_df.drop(['Name', 'Sex', 'Ticket', 'Cabin', 'PassengerId'], axis=1) 
+train_df = train_df.drop(['Name', 'Sex', 'Ticket', 'Cabin', 'PassengerId'], axis=1)
+
+# drop the samples without age
+train_df_nona = train_df.dropna(axis=0)
+
+# train a model for age
+train_y = train_df_nona['Age'].values
+train_X = train_df_nona.drop('Age', axis=1).values
+
+dtr = DecisionTreeRegressor()
+dtr.fit(train_X, train_y)
+
+
+# 3. use tree to fill in blank values
+
+
+#-----------------------------------------------------------------
+
+
+
+
 
 
 # TEST DATA
@@ -98,25 +143,35 @@ y_train = train_data[0::,0]
 # print clf.cv_results_['params']
 
 
-clf = RandomForestClassifier(n_estimators=1000, max_features=None, criterion='entropy')
-clf.fit(X_train, y_train)
+forest = RandomForestClassifier(n_estimators=1000, max_features=None, criterion='entropy')
+forest.fit(X_train, y_train)
 print list(train_df.columns.values)
-print clf.feature_importances_
+print forest.feature_importances_
 
 
 # print 'Training...'
 # forest = RandomForestClassifier(n_estimators=100)
 # forest = forest.fit( train_data[0::,1::], train_data[0::,0] )
 
-# print 'Predicting...'
-# output = forest.predict(test_data).astype(int)
+print 'Predicting...'
+output = forest.predict(test_data).astype(int)
 
 # NEXT STEPS (3/20/17): build a predictive model for age and fare to impute missing data
+# NEXT STEPS (3/27/17): use decision tree to predict ages in training set and testing set,
+    # then see how overall accuracy is affected
 
 
-# predictions_file = open("myfirstforest.csv", "wb")
-# open_file_object = csv.writer(predictions_file)
-# open_file_object.writerow(["PassengerId","Survived"])
-# open_file_object.writerows(zip(ids, output))
-# predictions_file.close()
-# print 'Done.'
+predictions_file = open("myfirstforest.csv", "wb")
+open_file_object = csv.writer(predictions_file)
+open_file_object.writerow(["PassengerId","Survived"])
+open_file_object.writerows(zip(ids, output))
+predictions_file.close()
+print 'Done.'
+
+
+
+
+
+
+
+
