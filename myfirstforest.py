@@ -71,13 +71,15 @@ train_df_nona = train_df.dropna(axis=0)
 
 # train a model for age
 train_y = train_df_nona['Age'].values
-train_X = train_df_nona.drop('Age', axis=1).values
+train_X = train_df_nona.drop(['Age', 'Survived'], axis=1).values
 
 dtr = DecisionTreeRegressor()
 dtr.fit(train_X, train_y)
 
 
 # 3. use tree to fill in blank values
+train_df.loc[ (train_df.Age.isnull()), 'Age'] = dtr.predict(train_df[train_df.Age.isnull()].drop(['Age', 'Survived'], axis=1).values)
+
 
 
 #-----------------------------------------------------------------
@@ -103,10 +105,7 @@ if len(test_df.Embarked[ test_df.Embarked.isnull() ]) > 0:
 test_df.Embarked = test_df.Embarked.map( lambda x: Ports_dict[x]).astype(int)
 
 
-# All the ages with no data -> make the median of all Ages
-median_age = test_df['Age'].dropna().median() # try with train_df
-if len(test_df.Age[ test_df.Age.isnull() ]) > 0:
-    test_df.loc[ (test_df.Age.isnull()), 'Age'] = median_age
+
 
 # All the missing Fares -> assume median of their respective class
 if len(test_df.Fare[ test_df.Fare.isnull() ]) > 0:
@@ -116,10 +115,19 @@ if len(test_df.Fare[ test_df.Fare.isnull() ]) > 0:
     for f in range(0,3):                                              # loop 0 to 2
         test_df.loc[ (test_df.Fare.isnull()) & (test_df.Pclass == f+1 ), 'Fare'] = median_fare[f]
 
+test_df['Title'] = test_df['Name'].map(extract_title)
+
 # Collect the test data's PassengerIds before dropping it
 ids = test_df['PassengerId'].values
 # Remove the Name column, Cabin, Ticket, and Sex (since I copied and filled it to Gender)
-test_df = test_df.drop(['Name', 'Sex', 'Ticket', 'Cabin', 'PassengerId'], axis=1) 
+test_df = test_df.drop(['Name', 'Sex', 'Ticket', 'Cabin', 'PassengerId'], axis=1)
+
+# All the ages with no data -> make the median of all Ages
+median_age = test_df['Age'].dropna().median() # try with train_df
+if len(test_df.Age[ test_df.Age.isnull() ]) > 0:
+    test_df.loc[ (test_df.Age.isnull()), 'Age'] = median_age
+#test_df.loc[(test_df.Age.isnull()), 'Age'] = dtr.predict(test_df[test_df.Age.isnull()].drop(['Age'], axis=1).values)
+
 
 
 # The data is now ready to go. So lets fit to the train, then predict to the test!
@@ -159,6 +167,8 @@ output = forest.predict(test_data).astype(int)
 # NEXT STEPS (3/20/17): build a predictive model for age and fare to impute missing data
 # NEXT STEPS (3/27/17): use decision tree to predict ages in training set and testing set,
     # then see how overall accuracy is affected
+#NEXT STEPS (4/3/17): Does interpolating or using title for age do better than our DT?
+    # Why did our DT for predicting missing age values not improve anything?
 
 
 predictions_file = open("myfirstforest.csv", "wb")
