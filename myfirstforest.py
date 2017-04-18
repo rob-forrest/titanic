@@ -17,7 +17,7 @@ from sklearn.tree import DecisionTreeRegressor
 
 
 def extract_title(name):
-    title_dict = {'Mr': 6, 'Mrs': 1, 'Miss': 2, 'Master': 3, 'Dr': 4, 'Rev': 5}
+    title_dict = {'Mr': 6, 'Mrs': 1, 'Miss': 2, 'Master': 3, 'Dr': 4, 'Rev': 5, 'Col':6}
     for title in title_dict:
         if title in name:
             return title_dict[title]
@@ -136,7 +136,7 @@ train_data = train_df.values
 test_data = test_df.values
 
 param_grid = [
-  {'n_estimators': [10, 50, 100, 1000, 10000], 'criterion': ['gini', 'entropy'], 'max_features': ['auto', 'sqrt', 'log2', None]}
+  {'n_estimators': [10, 50, 100], 'max_depth': [2,3, None] ,'criterion': ['gini', 'entropy'], 'max_features': ['auto', 'sqrt', 'log2', None]}
  ]
 # param_grid = [
 #   {'n_estimators': [5, 10, 100, 1000]}
@@ -144,14 +144,14 @@ param_grid = [
 
 X_train = train_data[0::,1::] 
 y_train = train_data[0::,0]
-# clf = GridSearchCV(RandomForestClassifier(), param_grid) #, cv=5, scoring='precision_macro')
-# clf.fit(X_train, y_train)
-# print clf.best_params_
-# print clf.cv_results_['mean_test_score']
-# print clf.cv_results_['params']
+#clf = GridSearchCV(RandomForestClassifier(), param_grid) #, cv=5, scoring='precision_macro')
+#clf.fit(X_train, y_train)
+#print clf.best_params_
+#print clf.cv_results_['mean_test_score']
+#print clf.cv_results_['params']
 
 
-forest = RandomForestClassifier(n_estimators=1000, max_features=None, criterion='entropy')
+forest = RandomForestClassifier(n_estimators=50, max_features=None, criterion='entropy', max_depth=3)
 forest.fit(X_train, y_train)
 print list(train_df.columns.values)
 print forest.feature_importances_
@@ -169,7 +169,8 @@ output = forest.predict(test_data).astype(int)
     # then see how overall accuracy is affected
 #NEXT STEPS (4/3/17): Does interpolating or using title for age do better than our DT?
     # Why did our DT for predicting missing age values not improve anything?
-
+# Next Steps 4/10/17 We trimmed the tree with n_estimators=50, max_features=None, criterion='entropy', max_depth=3 and got our best score!
+# Let's look at other techniques online to see what others have been doing. What can we learn? Other classifiers? Other features?
 
 predictions_file = open("myfirstforest.csv", "wb")
 open_file_object = csv.writer(predictions_file)
